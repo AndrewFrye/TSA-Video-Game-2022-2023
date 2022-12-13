@@ -78,6 +78,29 @@ public class PlayerMove : MonoBehaviour
     
     private void slopeDetection()
     {
+        var rayArr = new List<RaycastHit>();
+        var rayCurrent = new RaycastHit();
+        var rayCount = 5;
+
+
+        for (int x = 0; x < rayCount; x++)
+        {
+            var rayPos = transform.position;
+            rayPos.x -= 1;
+            rayPos.x += (2 / rayCount) * x;
+
+            for (int y = 0; y < rayCount; y++)
+            {
+                rayPos.y -= 1;
+                rayPos.y += (2 / rayCount) * x;
+                
+                Physics.Raycast(rayPos, Vector3.down, out rayCurrent);
+                Debug.DrawRay(transform.position, Vector3.down * rayCurrent.distance, Color.yellow);
+                rayArr.Add((rayCurrent));
+            }
+            
+        }
         
+        Debug.Log(rayArr.ToString());
     }
 }
