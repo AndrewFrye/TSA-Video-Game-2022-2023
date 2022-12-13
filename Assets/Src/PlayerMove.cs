@@ -4,53 +4,80 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
+using Cursor = UnityEngine.Cursor;
 
 public class PlayerMove : MonoBehaviour
 {
     public CharacterController controller;
-    public InputActionMap input;
+    public PlayerControls controls;
+    public Camera cam;
 
     public Vector3 movement;
+    public Vector2 cameraRotate;
     public float speed;
     public float distToGround;
     public float gravity;
+    public float mouseSensVertical;
+    public float mouseSensHorizontal;
+    private float xRotation = 0f;
 
     private bool grounded;
     private bool jumping;
 
-    private void Start()
+    private void Awake()
     {
         Cursor.lockState = CursorLockMode.Locked;
-        input.Enable();
+
+        controls = new PlayerControls();
+        controls.Enable();
+        
     }
 
     public void Update()
     {
         checkGround();
-        //set the X and Z movement of the player based off the input
-        movement = new Vector3(input.FindAction("Move").ReadValue<Vector2>().x, 0,
-            input.FindAction("Move").ReadValue<Vector2>().y);
+        movement = transform.right * controls.main.Move.ReadValue<Vector2>().x + transform.forward * controls.main.Move.ReadValue<Vector2>().y;
+        cameraRotate = controls.main.Camera.ReadValue<Vector2>();
+        
+        slopeDetection();
         
         movement *= speed * Time.deltaTime; //Normalize the speed before adding in the gravity component
-
-
-
+        gravityCalc();
+        
+        cameraMove();
         controller.Move(movement);
     }
 
     private void gravityCalc() //Needs slopes to be handled
     {
-        if(!grounded && !jumping) movement.y = -gravity * Time.deltaTime;
+        if (!grounded && !jumping) movement.y = -gravity * Time.deltaTime;
     }
 
     private void checkGround()
     {
-        if(Physics.Raycast(transform.position, Vector3.down, distToGround + 0.1f))
+        if (Physics.Raycast(transform.position, Vector3.down, distToGround + 0.1f))
         {
             grounded = true;
-        } else
+        }
+        else
         {
             grounded = false;
         }
+    }
+
+    private void cameraMove()
+    {
+        xRotation -= cameraRotate.y * mouseSensVertical * Time.deltaTime;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+
+        cam.transform.position = transform.position;
+        transform.Rotate(Vector3.up, cameraRotate.x * mouseSensHorizontal * Time.deltaTime);
+        cam.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+    
+    private void slopeDetection()
+    {
+        
     }
 }
